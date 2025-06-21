@@ -23,9 +23,15 @@ public class Election {
     
     [Required]
     public ulong ServerId { get; set; }
-    
-    
-    
+
+    [Required]
+    public bool PublicResults { get; set; }
+
+    [Required]
+    public bool AnonymousVotes { get; set; }
+
+
+
     // ==== Nav Properties ====
 
     [InverseProperty(nameof(Models.Issue.Election))]

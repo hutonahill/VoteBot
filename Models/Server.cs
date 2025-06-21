@@ -6,8 +6,11 @@ namespace VoteBot.Models;
 
 public class Server {
     [Key]
-    public ulong ServerId;
+    public ulong ServerId { get; set; }
     
+    //TODO: EF Core does not support List<primitive types>. change this.
+    public List<ulong> RolesAllowedToCreate { get; set; } = new List<ulong>();
+
     // ==== Nav Properties
 
     [InverseProperty(nameof(Models.User.Server))]

@@ -18,6 +18,7 @@ public class Issue {
     [Required]
     public VotingMethods VotingMethod { get; set; }
     
+    //TODO: EF Core does not support List<primitive types>. change this.
     [Required]
     public HashSet<ulong> VotingRoleIds = new HashSet<ulong>();
 
