@@ -26,5 +26,6 @@ public class Vote {
     public User User { get; set; }
 
     [ForeignKey(nameof(OptionId))]
+    [InverseProperty(nameof(Models.Option.Votes))]
     public Option Option { get; set; }
 }

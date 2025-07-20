@@ -14,10 +14,10 @@ public class Server {
     // ==== Nav Properties
 
     [InverseProperty(nameof(Models.User.Server))]
-    public List<User> Users = new List<User>();
+    public List<User> Users { get; set; } = new List<User>();
 
     [InverseProperty(nameof(Models.Election.Server))]
-    public List<Election> Elections = new List<Election>();
+    public List<Election> Elections { get; set; } = new List<Election>();
 
     public SocketGuild GetGuild(DiscordSocketClient client) {
         return client.GetGuild(ServerId);

@@ -8,6 +8,7 @@ public class Election {
     [Key]
     public uint ElectionId { get; set; }
     
+    [StringLength(50)]
     public string? Name { get; set; }
     
     public DateTime? PublicationDate { get; set; }
@@ -29,13 +30,11 @@ public class Election {
 
     [Required]
     public bool AnonymousVotes { get; set; }
-
-
-
+    
     // ==== Nav Properties ====
 
     [InverseProperty(nameof(Models.Issue.Election))]
-    public List<Issue> Issues = new List<Issue>();
+    public List<Issue> Issues { get; set; } = new List<Issue>();
 
     [ForeignKey(nameof(OwnerId))]
     [InverseProperty(nameof(Models.User.Elections))]
@@ -46,7 +45,6 @@ public class Election {
     public Server Server { get; set; }
     
     // ==== Util Methods ====
-
 
     public override string ToString() {
         if (Name == null) {

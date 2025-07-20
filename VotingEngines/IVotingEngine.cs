@@ -1,12 +1,11 @@
-﻿using Discord;
-using Discord.WebSocket;
+﻿using Discord.WebSocket;
 using VoteBot.Models;
 
-namespace VoteBot;
+namespace VoteBot.VotingEngines;
 
 public interface IVotingEngine {
 
-    public DiscordSocketClient Client { get; protected set; }
+    public ref DiscordSocketClient Client { get; }
 
     public Issue Issue { get; protected set; }
 
@@ -21,5 +20,4 @@ public interface IVotingEngine {
     public HashSet<SocketGuildUser> GetVoters() {
         return Issue.GetVoters(Client);
     }
-
 }

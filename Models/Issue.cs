@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Discord.WebSocket;
+using VoteBot.VotingEngines;
 
 namespace VoteBot.Models;
 
@@ -20,7 +21,7 @@ public class Issue {
     
     //TODO: EF Core does not support List<primitive types>. change this.
     [Required]
-    public HashSet<ulong> VotingRoleIds = new HashSet<ulong>();
+    public HashSet<ulong> VotingRoleIds { get; set; } = new HashSet<ulong>();
 
     // ==== Nav Properties ====
     
@@ -29,7 +30,7 @@ public class Issue {
     public Election Election { get; set; }
 
     [InverseProperty(nameof(Models.Option.Issue))]
-    public List<Option> Options = new List<Option>();
+    public List<Option> Options { get; set; } = new List<Option>();
     
     // ==== Util Methods ====
 
@@ -73,10 +74,22 @@ public class Issue {
     public HashSet<SocketGuildUser> GetVoters(DiscordSocketClient client) {
         return GetVoters(Election.Server.GetGuild(client));
     }
+
+    /* Might not need this, but it's here if I do.
+     public HashSet<Vote> GetVotes() {
+        HashSet<Vote> voters = new HashSet<Vote>();
+
+        foreach (Option option in Options) {
+            voters.UnionWith(option.Votes);
+        }
+        
+        return voters;
+    }*/
     
 }
 
 public enum VotingMethods {
+    Plurality,
     RankedChoice,
     MultiWinnerRankedChoice,
     ApprovalVoting,

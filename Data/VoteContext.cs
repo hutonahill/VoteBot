@@ -5,15 +5,11 @@ using VoteBot.Models;
 
 namespace VoteBot.Data;
 
-public class VoteContext : DbContext {
-    public DbSet<Election> Elections;
-    public DbSet<Issue> Issues;
-    public DbSet<Option> Options;
-    public DbSet<Server> Servers;
-    public DbSet<User> Users;
-    public DbSet<Vote> Votes;
-    
-    
-    
-    
+public class VoteContext(DbContextOptions<VoteContext> options) : DbContext(options) {
+    public DbSet<Election> Elections { get; set; }
+    public DbSet<Issue> Issues { get; set; }
+    public DbSet<Option> Options { get; set; }
+    public DbSet<Server> Servers { get; set; }
+    public DbSet<User> Users { get; set; }
+    public DbSet<Vote> Votes { get; set; }
 }

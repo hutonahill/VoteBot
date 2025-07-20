@@ -9,17 +9,17 @@ public class Option {
     
     [Required]
     [StringLength(120)]
-    public string OptionString { get; set; }
+    public required string OptionString { get; set; }
 
-    public uint AdvocateId { get; set; }
-
-    [StringLength(1000)]
-    public string For { get; set; }
-
-    public uint OppositionId { get; set; }
+    public uint? AdvocateId { get; set; }
 
     [StringLength(1000)]
-    public string Against { get; set; }
+    public string? For { get; set; }
+
+    public uint? OppositionId { get; set; }
+
+    [StringLength(1000)]
+    public string? Against { get; set; }
 
     [Required]
     public uint IssueId { get; set; }
@@ -28,16 +28,16 @@ public class Option {
 
     [ForeignKey(nameof(AdvocateId))]
     [InverseProperty(nameof(Models.User.AdvocateFor))]
-    public User Advocate { get; set; }
+    public User? Advocate { get; set; }
 
     [ForeignKey(nameof(OppositionId))]
     [InverseProperty(nameof(Models.User.OppositionFor))]
-    public User Opposition { get; set; }
+    public User? Opposition { get; set; }
     
     [ForeignKey(nameof(IssueId))]
     [InverseProperty(nameof(Models.Issue.Options))]
-    public Issue Issue { get; set; }
+    public required Issue Issue { get; set; }
 
     [InverseProperty(nameof(Models.Vote.Option))]
-    public List<Vote> Votes = new List<Vote>();
+    public List<Vote> Votes { get; set; } = new List<Vote>();
 }

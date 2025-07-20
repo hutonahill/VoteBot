@@ -21,16 +21,16 @@ public class User {
     public Server Server { get; set; }
 
     [InverseProperty(nameof(Models.Option.Advocate))]
-    public List<Option> AdvocateFor = new List<Option>();
+    public List<Option> AdvocateFor { get; set; }= new List<Option>();
 
     [InverseProperty(nameof(Models.Option.Opposition))]
-    public List<Option> OppositionFor = new List<Option>();
+    public List<Option> OppositionFor { get; set; }= new List<Option>();
 
     [InverseProperty(nameof(Models.Election.Owner))]
-    public List<Election> Elections = new List<Election>();
+    public List<Election> Elections { get; set; }= new List<Election>();
 
     [InverseProperty(nameof(Models.Vote.User))]
-    public List<Vote> Votes = new List<Vote>();
+    public List<Vote> Votes { get; set; } = new List<Vote>();
     
     // ==== Util Methods ====
 
