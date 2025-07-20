@@ -7,7 +7,7 @@ public class PluralityEngine : IVotingEngine {
     public PluralityEngine(Issue issue) {
         Issue = issue;
     }
-
+    
     public void Tabulate() {
         Dictionary<Option, int> unorderedResults = new Dictionary<Option, int>();
         foreach (Option option in Issue.Options) {

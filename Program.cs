@@ -1,32 +1,46 @@
+using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using VoteBot.Data;
+using VoteBot.DiscordBot;
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+namespace VoteBot;
 
-// Add services to the container.
-builder.Services.AddRazorPages();
+public class Program {
+    
+    public DiscordSocketClient Client { get; set; }
+    
+    private const string secretsFilePath = "secrets.json";
+    
+    public static void Main(string[] args) {
+        WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+        
+        builder.ValidateAndApply(secretsFilePath);
 
-builder.Services.AddDbContext<VoteContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString(nameof(VoteContext)))
-);
+        // Add services to the container.
+        builder.Services.AddRazorPages();
 
-WebApplication app = builder.Build();
+        builder.Services.AddDbContext<VoteContext>(options =>
+            options.UseSqlite(builder.Configuration.GetConnectionString(nameof(VoteContext)))
+        );
+        
+        builder.Services.AddHostedService<Bot>();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment()) {
-    app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+        WebApplication app = builder.Build();
+
+        // Configure the HTTP request pipeline.
+        if (!app.Environment.IsDevelopment()) {
+            app.UseExceptionHandler("/Error");
+            app.UseHsts();
+        }
+
+        app.UseHttpsRedirection();
+        app.UseRouting();
+        app.UseAuthorization();
+
+        app.MapStaticAssets();
+        app.MapRazorPages()
+            .WithStaticAssets();
+
+        app.Run();
+    }
 }
-
-app.UseHttpsRedirection();
-
-app.UseRouting();
-
-app.UseAuthorization();
-
-app.MapStaticAssets();
-app.MapRazorPages()
-    .WithStaticAssets();
-
-app.Run();
