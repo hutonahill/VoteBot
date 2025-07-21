@@ -168,6 +168,7 @@ public class Bot : BackgroundService {
         messageList.Add("\n===END LOG===\n"); 
         
         // TODO: Using different sending method for this project. Need to add a new method.
+        // Working on learning serial log
         if (channel != null) {
             foreach (string part in messageList) {
                 await SendMessageAsync(channel, part)!;

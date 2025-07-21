@@ -58,7 +58,7 @@ public class MultiLineIndentFormatter : ITextFormatter {
         }
     }
     
-    public static string WrapTextToTerminalWidth(string text, int tabDepth = 0) {
+    public static string WrapTextToTerminalWidth(string text) {
         int width;
         try {
             width = Console.WindowWidth;
@@ -72,6 +72,8 @@ public class MultiLineIndentFormatter : ITextFormatter {
         List<string> lines = new List<string>();
         string[] words = text.Split(' ');
         string currentLine = "";
+        
+        //TODO: we need to loop by intended line so when we split intended lines we can indent.
         
         // add all the words
         foreach (string word in words) {
@@ -91,6 +93,8 @@ public class MultiLineIndentFormatter : ITextFormatter {
                 else {
                     int index = 0;
                     while (index < word.Length) {
+                        
+                        // chunkSize is ether width or the rest of the word
                         int chunkSize = Math.Min(width, word.Length - index);
                         string chunk = word.Substring(index, chunkSize);
 
