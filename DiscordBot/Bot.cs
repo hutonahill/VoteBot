@@ -15,9 +15,10 @@ using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 namespace VoteBot.DiscordBot;
 
 public class Bot : BackgroundService {
-    private static readonly DiscordSocketClient _client;
+    private static DiscordSocketClient _client;
     private static readonly ILogger<Bot> _logger;
-    private static readonly string _token;
+    private static string _token;
+    private readonly IServiceProvider _services;
     
     
     private static InteractionService? _interactionService;
@@ -29,6 +30,12 @@ public class Bot : BackgroundService {
                          GatewayIntents.GuildMessages | GatewayIntents.GuildVoiceStates,
         AlwaysDownloadUsers = true,
     };
+    
+    
+    public Bot(IConfiguration config, IServiceProvider services) {
+        _token = config["Discord:Token"] ?? throw new InvalidOperationException("Bot token missing");
+        _services = services;
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
         _configuration = new ConfigurationBuilder()
@@ -52,36 +59,12 @@ public class Bot : BackgroundService {
         await Task.Delay(-1, stoppingToken);
     }
     
-    private static async Task HandleGuildJoinedAsync(SocketGuild guild) {
+    private async Task HandleGuildJoinedAsync(SocketGuild guild) {
         // add an entry
-        guild.AddServer();
+        using VoteScope scope = GetVoteScope();
+        guild.AddServer(scope);
 
         //check for joe
-        if (config != null) {
-            SocketUser? Joe = guild.GetUser(config.JoeUserId);
-
-            if (Joe != null) {
-                SocketTextChannel defaultChannel = guild.DefaultChannel;
-
-                if (defaultChannel is ITextChannel textChannel) {
-                    // Send a welcome message to the default channel
-                    await textChannel.SendMessageAsync($"oof");
-                    await Task.Delay(1000);
-
-                    await textChannel.SendMessageAsync("Well...");
-                    await Task.Delay(1000);
-
-                    await textChannel.SendMessageAsync("This is awkward...");
-                    await Task.Delay(700);
-
-                    await textChannel.SendMessageAsync(Joe.Mention);
-                }
-                else {
-                    await LogAsync(LogSeverity.Info, 
-                        "Default channel is not a text channel or does not exist.");
-                }
-            }
-        }
     }
     
     public static async Task LogAsync(LogSeverity severity, string message, Exception? exception = null,
@@ -129,7 +112,7 @@ public class Bot : BackgroundService {
         }
     }
     
-    private static async Task ClientReadyAsync() {
+    private async Task ClientReadyAsync() {
 
         _interactionService = new InteractionService(_client, new InteractionServiceConfig {
             UseCompiledLambda = true,
@@ -145,31 +128,21 @@ public class Bot : BackgroundService {
         await _interactionService.RegisterCommandsGloballyAsync();
         
         Debug.Assert(_client != null, nameof(_client) + " != null");
-        await _client.VerifyServer();
+        using VoteScope scope = GetVoteScope();
+        await VerifyServer(scope);
         
         Console.WriteLine($"Logged in as {_client.CurrentUser.Username} - {_client.CurrentUser.Id}");
     }
     
+    
+    
     private static async Task LogInternalAsync(LogMessage log) {
-        
-        Debug.Assert(config != null, nameof(config) + " != null");
-        Debug.Assert(_client != null, nameof(_client) + " != null");
-        ITextChannel? channel = _client.GetChannel(config.LoggingChannel) as ITextChannel;
 
         List<string> messageList = new List<string>();
-        
-        if (log.Severity == LogSeverity.Critical) {
-            SocketUser admin = _client.GetUser(config.AdminUser);
-
-            messageList.Add("{admin.Mention}: \n");
-        }
 
         string block1 = "## Log: ";
 
         string block2 = "";
-        
-        
-        
 
         if (!string.IsNullOrEmpty(log.Source)) {
             block1 += $"\n### Source \n\t`{log.Source}` ";
@@ -191,13 +164,10 @@ public class Bot : BackgroundService {
         if (block2 != "") {
             messageList.Add(block2);
         }
-        
-        
-
-        
 
         messageList.Add("\n===END LOG===\n"); 
-
+        
+        // TODO: Using different sending method for this project. Need to add a new method.
         if (channel != null) {
             foreach (string part in messageList) {
                 await SendMessageAsync(channel, part)!;
@@ -359,6 +329,40 @@ public class Bot : BackgroundService {
             await SendMessageAsync(channel, $"{codeWrapper}{code}{codeWrapper}");
         }
     }
+
+    private VoteScope GetVoteScope() {
+        return new VoteScope(_services);
+    }
+    
+    public static async Task VerifyServer(VoteScope scope) {
+        IReadOnlyCollection<SocketGuild> guilds = _client.Guilds;
+        await using VoteContext Context = scope.Db;
+        foreach (SocketGuild guild in guilds) {
+            if (Context.Servers.Count(server => server.ServerId == guild.Id) == 0) {
+                guild.AddServer(scope);
+                await Bot.LogAsync(LogSeverity.Info, $"Added server: {guild.Id}");
+            }
+        }
+
+        await Context.SaveChangesAsync();
+        
+    }
+}
+
+public class VoteScope : IDisposable{
+    public VoteContext Db { get; private set; }
+
+
+    private IServiceScope _scope;
+
+    public VoteScope(IServiceProvider services) {
+        _scope = services.CreateScope();
+        Db = _scope.ServiceProvider.GetRequiredService<VoteContext>();
+    }
+
+    public void Dispose() {
+        _scope.Dispose();
+    }
 }
 
 
@@ -370,7 +374,9 @@ public static class Util {
         return value;
     }
     
-    public static void AddServer(this SocketGuild guild, VoteContext context) {
+    public static void AddServer(this SocketGuild guild, VoteScope scope) {
+        using VoteContext context = scope.Db
+        
         int numServers = context.Servers.Count(s => s.ServerId == guild.Id);
 
         if (numServers == 0) {
@@ -383,105 +389,8 @@ public static class Util {
             context.SaveChanges();
         }
     }
+    
+    
 }
 
 
-//TODO: remember how all this works
-public class DiscordOptions {
-    
-    public const string SectionName = "BotSettings";
-    
-    public Dictionary<string, ISetting?> GlobalSettings { get; set; } = new() {
-        { "NsfwFlow", new Setting<bool>("Flow is considered NSFW", true) },
-        { "ScoreRoundsTo", new Setting<uint>("Round scores to this place", 10) }
-    };
-    
-
-    // my user_id
-    public ulong AdminUser { get; set; } = 168496575369183232;
-
-    public string DISCORD_KEY { get; set; } = "DISCORD API KEY";
-
-    public string pasteBinUsername { get; set; } = "USERNAME";
-
-    public string pasteBinPassword { get; set; } = "PASSWORD";
-
-    public string pasteApiKey { get; set; } = "PASTE API KEY";
-
-    public string flowPasteKey { get; set; } = "taDVgTGF";
-
-    public string jokePasteKey { get; set; } = "LHU6giXy";
-
-    public List<ulong> BlacklistedUsers { get; set; } = new();
-
-    //                              my personal server,  The party bus
-}
-
-
-public abstract class ISetting {
-    public string? Description { get; init; }
-    
-    public abstract Type getType();
-}
-
-public class Setting<T> : ISetting {
-    public T Value { get; set; }
-
-    public override string ToString() {
-        return $"\t- {Description}\n" +
-               $"\t- Type: '{typeof(T).Name}' \n" +
-               $"\t- Value: '{Value}'";
-    }
-
-    public override Type getType() {
-        return typeof(T);
-    }
-    
-    public Setting(string description, T value) {
-        Description = description;
-        Value = value;
-    }
-}
-
-public class SettingBaseConverter : JsonConverter {
-
-    public override bool CanConvert(Type objectType) {
-        return typeof(ISetting).IsAssignableFrom(objectType);
-    }
-
-    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) {
-        var settingBase = value as ISetting;
-
-        Debug.Assert(settingBase != null, nameof(settingBase) + " != null");
-
-        writer.WriteStartObject();
-        writer.WritePropertyName("Description");
-        writer.WriteValue(settingBase.Description);
-        writer.WritePropertyName("Type");
-        writer.WriteValue(settingBase.GetType().FullName); // Fixed typo to `GetType`
-        writer.WritePropertyName("Value");
-        serializer.Serialize(writer, ((dynamic)settingBase).Value); // Use dynamic to handle different value types
-        writer.WriteEndObject();
-    }
-
-    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer) {
-        JObject obj = JObject.Load(reader);
-
-        string description = obj["Description"]?.ToString() ?? "";
-        string typeName = obj["Type"]?.ToString() ?? "";
-        JToken? valueToken = obj["Value"];
-
-        // Resolve the type from the type name
-        Type? type = Type.GetType(typeName);
-        if (type == null) {
-            throw new JsonException($"Unable to find the type: {typeName}");
-        }
-
-        // Create a generic Setting<T> type based on the resolved type
-        Type settingType = typeof(Setting<>).MakeGenericType(type);
-        object? value = valueToken?.ToObject(type, serializer); // Deserialize the value to the expected type
-
-        // Return a new instance of Setting<T> with the deserialized description and value
-        return Activator.CreateInstance(settingType, description, value);
-    }
-}

@@ -1,5 +1,6 @@
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using VoteBot.Data;
 using VoteBot.DiscordBot;
 
@@ -11,7 +12,21 @@ public class Program {
     
     private const string secretsFilePath = "secrets.json";
     
+    private const string logsFolder = "Logs";
+    
     public static void Main(string[] args) {
+
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console()
+            .WriteTo.File(
+                path: $"{logsFolder}/log-.log",
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level}] {Message:lj}{NewLine}{Exception}",
+                rollingInterval: RollingInterval.Day,
+                rollOnFileSizeLimit: false
+            ).CreateLogger();
+        
+        
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         
         builder.ValidateAndApply(secretsFilePath);
