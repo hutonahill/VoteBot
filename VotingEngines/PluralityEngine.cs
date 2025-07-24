@@ -8,20 +8,33 @@ public class PluralityEngine : IVotingEngine {
         Issue = issue;
     }
     
-    public void Tabulate() {
-        Dictionary<Option, int> unorderedResults = new Dictionary<Option, int>();
+    public void Tabulate(bool finalize = true) {
+        Dictionary<Option, uint> unorderedResults = new Dictionary<Option, uint>();
+        uint totalVotes = 0;
+        
         foreach (Option option in Issue.Options) {
             foreach (Vote vote in option.Votes) {
                 unorderedResults[option] += 1;
+                totalVotes++;
             }
         }
         
         Results = unorderedResults
             .OrderByDescending(kvp => kvp.Value)
             .ToList();
+
+        if (finalize == true) {
+            foreach (Option option in Issue.Options) {
+                option.Results.Add(new Result {
+                    Option = option,
+                    // In this case Value is the percentage of votes received
+                    Value = ((double)unorderedResults[option]/totalVotes)
+                });
+            }
+        }
     }
     
-    private List<KeyValuePair<Option, int>> Results = new List<KeyValuePair<Option, int>>();
+    private List<KeyValuePair<Option, uint>> Results = new List<KeyValuePair<Option, uint>>();
     public ref DiscordSocketClient Client => throw new NotImplementedException();
 
     private Issue Issue { get; set; }

@@ -10,12 +10,14 @@ public class Option {
     [Required]
     [StringLength(120)]
     public required string OptionString { get; set; }
-
+    
+    [Display(Name="Advocate Id", Description = "The Id of the user who will advocate for the option")]
     public uint? AdvocateId { get; set; }
 
     [StringLength(1000)]
     public string? For { get; set; }
-
+    
+    [Display(Name="Opposition Id", Description = "The Id of the user who will oppose for the option")]
     public uint? OppositionId { get; set; }
 
     [StringLength(1000)]
@@ -40,4 +42,7 @@ public class Option {
 
     [InverseProperty(nameof(Models.Vote.Option))]
     public List<Vote> Votes { get; set; } = new List<Vote>();
+
+    [InverseProperty(nameof(Models.Result.Option))]
+    public List<Result> Results { get; set; } = new List<Result>();
 }

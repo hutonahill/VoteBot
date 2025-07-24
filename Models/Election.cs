@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.CompilerServices;
 using Discord.WebSocket;
 
 namespace VoteBot.Models;
@@ -11,12 +12,15 @@ public class Election {
     [StringLength(50)]
     public string? Name { get; set; }
     
+    [Display(Name ="Publication Date", Description ="The date the election is made public.")]
     public DateTime? PublicationDate { get; set; }
 
     [Required]
+    [Display(Name="Start Time", Description ="The time when voting starts.")]
     public DateTime StartTime { get; set; }
 
     [Required]
+    [Display(Name="End Time", Description ="The time when voting ends.")]
     public DateTime EndTime { get; set; }
 
     [Required]

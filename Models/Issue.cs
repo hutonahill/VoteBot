@@ -32,6 +32,10 @@ public class Issue {
     [InverseProperty(nameof(Models.Option.Issue))]
     public List<Option> Options { get; set; } = new List<Option>();
     
+    public List<Result>? Results => Options
+        .SelectMany(o => o.Results)
+        .ToList();
+    
     // ==== Util Methods ====
 
     public IVotingEngine GetVotingEngine() {
@@ -82,10 +86,10 @@ public class Issue {
         foreach (Option option in Options) {
             voters.UnionWith(option.Votes);
         }
-        
+
         return voters;
     }*/
-    
+
 }
 
 public enum VotingMethods {

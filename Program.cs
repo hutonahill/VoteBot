@@ -40,6 +40,8 @@ public class Program {
         
         builder.Services.AddHostedService<Bot>();
 
+        builder.Host.UseSerilog();
+
         WebApplication app = builder.Build();
 
         // Configure the HTTP request pipeline.

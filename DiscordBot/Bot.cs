@@ -16,7 +16,7 @@ namespace VoteBot.DiscordBot;
 
 public class Bot : BackgroundService {
     private static DiscordSocketClient _client;
-    private static readonly ILogger<Bot> _logger;
+    private static ILogger<Bot> _logger;
     private static string _token;
     private readonly IServiceProvider _services;
     
@@ -32,9 +32,10 @@ public class Bot : BackgroundService {
     };
     
     
-    public Bot(IConfiguration config, IServiceProvider services) {
+    public Bot(IConfiguration config, IServiceProvider services, ILogger<Bot> logger) {
         _token = config["Discord:Token"] ?? throw new InvalidOperationException("Bot token missing");
         _services = services;
+        _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -169,15 +170,39 @@ public class Bot : BackgroundService {
         
         // TODO: Using different sending method for this project. Need to add a new method.
         // Working on learning serial log
-        if (channel != null) {
-            foreach (string part in messageList) {
-                await SendMessageAsync(channel, part)!;
-            }
+
+        string message = string.Join("\n", messageList);
+
+        switch (log.Severity) {
+            case LogSeverity.Critical:
+                _logger.LogCritical(log.Exception, message);
+                break;
             
+            case LogSeverity.Debug:
+                _logger.LogDebug(log.Exception, message);
+                break;
             
-        }
-        else {
-            Console.WriteLine("Unable to Identify Channel.");
+            case LogSeverity.Error:
+                _logger.LogError(log.Exception, message);
+                break;
+            
+            case LogSeverity.Info:
+                _logger.LogInformation(log.Exception, message);
+                break;
+            
+            case LogSeverity.Verbose:
+                _logger.LogTrace(log.Exception, message);
+                break;
+            
+            case LogSeverity.Warning:
+                _logger.LogWarning(log.Exception, message);
+                break;
+            
+            default:
+                throw new UnreachableException(
+                    $"Expected a value within {nameof(LogSeverity)}. " +
+                    $"Got '{log.Severity.ToString()}' instead");
+                break;
         }
         
 
@@ -376,7 +401,7 @@ public static class Util {
     }
     
     public static void AddServer(this SocketGuild guild, VoteScope scope) {
-        using VoteContext context = scope.Db
+        using VoteContext context = scope.Db;
         
         int numServers = context.Servers.Count(s => s.ServerId == guild.Id);
 
